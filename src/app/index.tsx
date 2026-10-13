@@ -1,34 +1,60 @@
 import {} from 'expo-image';
 import { useEffect, useState } from 'react';
 import {
+  PomodoroManager as manager,
+  type PomodoroStep,
+} from './pomodoroManager';
+import {
   Text,
   View,
   StyleSheet,
   ImageBackground,
-  Button,
-  TouchableOpacity,
   Pressable,
 } from 'react-native';
 
-interface StandartCircle {
-  limit: Number;
-  note: String;
-}
+// interface PomodoroStep {
+//   limit: number;
+//   note: string;
+// }
 
 export default function Index() {
-  const [timeLeft, setTimeLeft] = useState(1500);
-  const [isRunning, setIsrunning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(1500);
+  const [isRunning, setIsrunning] = useState<boolean>(false);
+  const [describtion, setDescription] = useState<string>('');
 
-  const circle: StandartCircle[] = [
-    { limit: 25, note: 'first session' },
-    { limit: 5, note: 'break' },
-    { limit: 25, note: 'second session' },
-    { limit: 5, note: 'break' },
-    { limit: 25, note: 'third session' },
-    { limit: 5, note: 'break' },
-    { limit: 25, note: 'last session' },
-    { limit: 30, note: 'break' },
+  const classicLoop: PomodoroStep[] = [
+    { limit: 25 * 60, note: 'first session' },
+    { limit: 5 * 60, note: 'break' },
+    { limit: 25 * 60, note: 'second session' },
+    { limit: 5 * 60, note: 'break' },
+    { limit: 25 * 60, note: 'third session' },
+    { limit: 5 * 60, note: 'break' },
+    { limit: 25 * 60, note: 'last session' },
+    { limit: 30 * 60, note: 'break' },
   ];
+
+  const runTimer = ({ limit, note }: PomodoroStep) => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    setDescription(note);
+    setTimeLeft(limit);
+    if (isRunning && timeLeft >= 0) {
+      interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+    } else if (timeLeft <= 0) {
+      setIsrunning(false);
+      clearInterval(interval);
+    }
+  };
+
+  const startTimer = async (loop: PomodoroStep[]) => {
+    setIsrunning(true);
+    if (loop.length <= 0) {
+      setIsrunning(false);
+      return;
+    }
+    for (let i = 0; i < loop.length; i += 1) {
+      await runTimer(loop[i]);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -36,20 +62,20 @@ export default function Index() {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
+  // useEffect(() => {
+  //   let interval: ReturnType<typeof setInterval> | null = null;
 
-    if (isRunning && timeLeft >= 0) {
-      interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft === 0) {
-      setIsrunning(false);
-    }
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isRunning, timeLeft]);
+  //   if (isRunning && timeLeft >= 0) {
+  //     interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+  //   } else if (timeLeft === 0) {
+  //     setIsrunning(false);
+  //   }
+  //   return () => {
+  //     if (interval) {
+  //       clearInterval(interval);
+  //     }
+  //   };
+  // }, [isRunning, timeLeft]);
 
   return (
     <View style={styles.container}>
@@ -66,7 +92,12 @@ export default function Index() {
 
         <View style={styles.controlContainer}>
           <Pressable style={styles.controlButton}>
-            <Text style={styles.controlText}>start</Text>
+            <Text
+              style={styles.controlText}
+              onPress={() => startTimer(classicLoop)}
+            >
+              start
+            </Text>
           </Pressable>
           <Pressable style={styles.controlButton}>
             <Text style={styles.controlText}>pause</Text>
