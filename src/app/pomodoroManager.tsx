@@ -12,9 +12,9 @@ export class PomodoroManager {
 
   private onTick?: (
     timeLeft: number,
-    note: string,
-    index: number,
-    isRunning: boolean
+    note: string
+    // index: number,
+    // isRunning: boolean
   ) => void;
 
   constructor(queue: PomodoroStep[]) {
@@ -37,9 +37,9 @@ export class PomodoroManager {
   public subscribe(
     callback: (
       timeLeft: number,
-      note: string,
-      index: number,
-      isRunning: boolean
+      note: string
+      // index: number,
+      // isRunning: boolean
     ) => void
   ) {
     this.onTick = callback;
@@ -49,9 +49,9 @@ export class PomodoroManager {
     if (this.onTick && this.queue[this.currentIndex]) {
       this.onTick(
         this.timeLeft,
-        this.queue[this.currentIndex].note,
-        this.currentIndex,
-        this.isRunning
+        this.queue[this.currentIndex].note
+        // this.currentIndex,
+        // this.isRunning
       );
     }
   }

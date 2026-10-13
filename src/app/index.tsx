@@ -1,9 +1,6 @@
 import {} from 'expo-image';
-import { useEffect, useState } from 'react';
-import {
-  PomodoroManager as manager,
-  type PomodoroStep,
-} from './pomodoroManager';
+import { useEffect, useRef, useState } from 'react';
+import { PomodoroManager, type PomodoroStep } from './pomodoroManager';
 import {
   Text,
   View,
@@ -12,49 +9,24 @@ import {
   Pressable,
 } from 'react-native';
 
-// interface PomodoroStep {
-//   limit: number;
-//   note: string;
-// }
+const classicLoop: PomodoroStep[] = [
+  { limit: 25 * 60, note: 'first session' },
+  { limit: 5 * 60, note: 'break' },
+  { limit: 25 * 60, note: 'second session' },
+  { limit: 5 * 60, note: 'break' },
+  { limit: 25 * 60, note: 'third session' },
+  { limit: 5 * 60, note: 'break' },
+  { limit: 25 * 60, note: 'last session' },
+  { limit: 30 * 60, note: 'break' },
+];
 
 export default function Index() {
   const [timeLeft, setTimeLeft] = useState<number>(1500);
-  const [isRunning, setIsrunning] = useState<boolean>(false);
-  const [describtion, setDescription] = useState<string>('');
+  const [note, setNote] = useState<string>('');
+  // const [isRunning, setIsrunning] = useState<boolean>(false);
+  // const [currentIndex, setCurrentIndex] = useState<number>(0);
 
-  const classicLoop: PomodoroStep[] = [
-    { limit: 25 * 60, note: 'first session' },
-    { limit: 5 * 60, note: 'break' },
-    { limit: 25 * 60, note: 'second session' },
-    { limit: 5 * 60, note: 'break' },
-    { limit: 25 * 60, note: 'third session' },
-    { limit: 5 * 60, note: 'break' },
-    { limit: 25 * 60, note: 'last session' },
-    { limit: 30 * 60, note: 'break' },
-  ];
-
-  const runTimer = ({ limit, note }: PomodoroStep) => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    setDescription(note);
-    setTimeLeft(limit);
-    if (isRunning && timeLeft >= 0) {
-      interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft <= 0) {
-      setIsrunning(false);
-      clearInterval(interval);
-    }
-  };
-
-  const startTimer = async (loop: PomodoroStep[]) => {
-    setIsrunning(true);
-    if (loop.length <= 0) {
-      setIsrunning(false);
-      return;
-    }
-    for (let i = 0; i < loop.length; i += 1) {
-      await runTimer(loop[i]);
-    }
-  };
+  const managerRef = useRef(new PomodoroManager(classicLoop));
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -62,20 +34,19 @@ export default function Index() {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // useEffect(() => {
-  //   let interval: ReturnType<typeof setInterval> | null = null;
-
-  //   if (isRunning && timeLeft >= 0) {
-  //     interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-  //   } else if (timeLeft === 0) {
-  //     setIsrunning(false);
-  //   }
-  //   return () => {
-  //     if (interval) {
-  //       clearInterval(interval);
-  //     }
-  //   };
-  // }, [isRunning, timeLeft]);
+  useEffect(() => {
+    const manager = managerRef.current;
+    manager.subscribe((newTimeLeft, newNote) => {
+      setTimeLeft(newTimeLeft);
+      setNote(newNote);
+      // setCurrentIndex(newIndex);
+      // setIsrunning(newIsRunning);
+    });
+    manager.notify();
+    return () => {
+      manager.pause();
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -89,20 +60,27 @@ export default function Index() {
         <View style={styles.timerCircle}>
           <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
         </View>
+        <View>
+          <Text style={styles.currentTask}>{note}</Text>
+        </View>
 
         <View style={styles.controlContainer}>
-          <Pressable style={styles.controlButton}>
-            <Text
-              style={styles.controlText}
-              onPress={() => startTimer(classicLoop)}
-            >
-              start
-            </Text>
+          <Pressable
+            style={styles.controlButton}
+            onPress={() => managerRef.current.startTimer()}
+          >
+            <Text style={styles.controlText}>start</Text>
           </Pressable>
-          <Pressable style={styles.controlButton}>
+          <Pressable
+            style={styles.controlButton}
+            onPress={() => managerRef.current.pause()}
+          >
             <Text style={styles.controlText}>pause</Text>
           </Pressable>
-          <Pressable style={styles.controlButton}>
+          <Pressable
+            style={styles.controlButton}
+            onPress={() => managerRef.current.clear()}
+          >
             <Text style={styles.controlText}>clear</Text>
           </Pressable>
         </View>
@@ -114,8 +92,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
   background: {
     flex: 1,
@@ -129,9 +105,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: 'black',
+    // color: 'black',
     alignItems: 'center',
     paddingTop: 60,
+    color: '#F0F4F8',
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   timerCircle: {
     width: 220,
@@ -162,5 +143,16 @@ const styles = StyleSheet.create({
   },
   controlText: {
     fontSize: 24,
+  },
+  currentTask: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    // color: '#130314',
+    color: '#F0F4F8',
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    marginBottom: 40,
   },
 });
