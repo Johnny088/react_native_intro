@@ -10,12 +10,7 @@ export class PomodoroManager {
   private isRunning: boolean = false;
   private timeId: ReturnType<typeof setInterval> | null = null;
 
-  private onTick?: (
-    timeLeft: number,
-    note: string
-    // index: number,
-    // isRunning: boolean
-  ) => void;
+  private onTick?: (timeLeft: number, note: string) => void;
 
   constructor(queue: PomodoroStep[]) {
     this.queue = queue;
@@ -34,25 +29,13 @@ export class PomodoroManager {
     this.notify();
   }
 
-  public subscribe(
-    callback: (
-      timeLeft: number,
-      note: string
-      // index: number,
-      // isRunning: boolean
-    ) => void
-  ) {
+  public subscribe(callback: (timeLeft: number, note: string) => void) {
     this.onTick = callback;
   }
 
   public notify() {
     if (this.onTick && this.queue[this.currentIndex]) {
-      this.onTick(
-        this.timeLeft,
-        this.queue[this.currentIndex].note
-        // this.currentIndex,
-        // this.isRunning
-      );
+      this.onTick(this.timeLeft, this.queue[this.currentIndex].note);
     }
   }
 

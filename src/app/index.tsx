@@ -23,8 +23,6 @@ const classicLoop: PomodoroStep[] = [
 export default function Index() {
   const [timeLeft, setTimeLeft] = useState<number>(1500);
   const [note, setNote] = useState<string>('');
-  // const [isRunning, setIsrunning] = useState<boolean>(false);
-  // const [currentIndex, setCurrentIndex] = useState<number>(0);
 
   const managerRef = useRef(new PomodoroManager(classicLoop));
 
@@ -39,8 +37,6 @@ export default function Index() {
     manager.subscribe((newTimeLeft, newNote) => {
       setTimeLeft(newTimeLeft);
       setNote(newNote);
-      // setCurrentIndex(newIndex);
-      // setIsrunning(newIsRunning);
     });
     manager.notify();
     return () => {
@@ -99,13 +95,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     alignItems: 'center',
-    // justifyContent: 'center',
+
     justifyContent: 'flex-start',
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    // color: 'black',
+
     alignItems: 'center',
     paddingTop: 60,
     color: '#F0F4F8',
@@ -147,7 +143,7 @@ const styles = StyleSheet.create({
   currentTask: {
     fontSize: 24,
     fontWeight: 'bold',
-    // color: '#130314',
+
     color: '#F0F4F8',
     textTransform: 'uppercase',
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
